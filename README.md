@@ -16,7 +16,7 @@ This project is designed to run AI **fully locally**, with customizable identity
 
 ## 📂 Project Structure
 ```
-local-chat/
+local-ai-assistant/
 ├─ app.py                    
 │
 ├─ backend/
@@ -65,7 +65,7 @@ local-chat/
 ### 1. Clone Repository
 ```bash
 git clone https://github.com/rillToMe/local-chat.git
-cd local-chat
+cd local-ai-assistant
 ```
 
 ### 2. Create Virtual Environment (recommended)
