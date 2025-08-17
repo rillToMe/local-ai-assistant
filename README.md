@@ -64,7 +64,7 @@ local-ai-assistant/
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/rillToMe/local-chat.git
+git clone https://github.com/rillToMe/local-ai-assistant.git
 cd local-ai-assistant
 ```
 
