@@ -64,7 +64,7 @@ local-chat/
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/username/local-chat.git
+git clone https://github.com/rillToMe/local-chat.git
 cd local-chat
 ```
 
