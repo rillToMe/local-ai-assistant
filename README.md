@@ -5,11 +5,6 @@
 ---
 
 
-[![Gemma Docs](https://img.shields.io/badge/Gemma-Docs-blue)](https://ai.google.dev/gemma/docs)
-[![Qwen HF](https://img.shields.io/badge/Qwen-HuggingFace-orange)](https://huggingface.co/Qwen)
-[![DeepSeek HF](https://img.shields.io/badge/DeepSeek-HuggingFace-green)](https://huggingface.co/deepseek-ai)
-[![GPT-OSS](https://img.shields.io/badge/GPT--OSS-Research-purple)](https://openai.com/research/gpt-oss)
-[![Ollama Models](https://img.shields.io/badge/Ollama-Models-black)](https://ollama.com/library)
 
 ---
 
@@ -127,6 +122,12 @@ python app.py
 ---
 
 ## 🧩 Model Recommendations  
+
+[![Gemma Docs](https://img.shields.io/badge/Gemma-Docs-blue)](https://ai.google.dev/gemma/docs)
+[![Qwen HF](https://img.shields.io/badge/Qwen-HuggingFace-orange)](https://huggingface.co/Qwen)
+[![DeepSeek HF](https://img.shields.io/badge/DeepSeek-HuggingFace-green)](https://huggingface.co/deepseek-ai)
+[![GPT-OSS](https://img.shields.io/badge/GPT--OSS-Research-purple)](https://openai.com/research/gpt-oss)
+[![Ollama Models](https://img.shields.io/badge/Ollama-Models-black)](https://ollama.com/library)
 
 Based on official benchmarks and community tests:  
 
