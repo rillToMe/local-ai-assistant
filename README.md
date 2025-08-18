@@ -1,4 +1,4 @@
-# Local Chat 
+# Local Chat — Changli UI
 
 🚧 **Status:** This project is still in **development**, so expect bugs, incomplete features, and potential breaking changes. 🚧
 
@@ -64,7 +64,7 @@ local-ai-assistant/
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/rillToMe/local-ai-assistant.git
+git clone https://github.com/rillToMe/local-chat.git
 cd local-ai-assistant
 ```
 

@@ -6,7 +6,8 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QColor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem,
-    QFrame, QLabel, QLineEdit, QPushButton, QMessageBox, QDialog
+    QFrame, QLabel, QLineEdit, QPushButton, QMessageBox, QDialog, QComboBox, 
+    QTextEdit
 )
 
 from .client import Client
@@ -24,9 +25,10 @@ os.makedirs(DATA_DIR, exist_ok=True)
 API_BASE      = os.environ.get("CHANG_LI_API", "http://127.0.0.1:5000").rstrip("/")
 BACKEND_APP   = os.environ.get("CHANG_LI_BACKEND", os.path.join(BASE_DIR, "app.py"))
 
-UI_CFG_FILE   = os.path.join(DATA_DIR, "ui_chat_config.json")  
-IDENTITY_FILE = os.path.join(DATA_DIR, "config.json")         
+UI_CFG_FILE   = os.path.join(DATA_DIR, "ui_chat_config.json")
+IDENTITY_FILE = os.path.join(DATA_DIR, "config.json")
 SESS_FILE     = os.path.join(DATA_DIR, "chat_sessions.json")
+
 
 #data
 @dataclass
@@ -34,6 +36,7 @@ class Message:
     role: str
     text: str
     ts: datetime
+
 
 #chat window
 class ChatUI(QWidget):
@@ -48,13 +51,24 @@ class ChatUI(QWidget):
         self.setWindowTitle(f"{self.identity.get('ai_name','Changli')} — Local Chat UI")
         self.setStyleSheet("QWidget#ChatWindow{background:#0B0F1A;}")
 
-        self.client = Client(API_BASE, user_name=self.identity["user_name"], custom_prompt=self.identity.get("custom_prompt",""), ai_name=self.identity.get("ai_name", "AI"))
+        # client & worker
+        self.client = Client(
+            API_BASE,
+            user_name=self.identity["user_name"],
+            custom_prompt=self.identity.get("custom_prompt",""),
+            ai_name=self.identity.get("ai_name", "AI")
+        )
+        cfg = self.client.get_config()
+        self.client.model = cfg.get("default_model", "gemma3:4b")
+
         self.worker = Worker(self.client)
         self.worker.done.connect(self._on_ai)
         self.worker.error.connect(self._on_err)
 
+        # ======= UI LAYOUT =======
         root = QVBoxLayout(self); root.setContentsMargins(12,12,12,12); root.setSpacing(8)
 
+        # header
         top = QHBoxLayout(); top.setSpacing(8)
         self.title = QLabel(f"{self.identity.get('ai_name','Changli')} — Local Chat UI")
         self.title.setStyleSheet("color:#EAF2FF;font:700 18px 'Segoe UI','Inter';")
@@ -64,7 +78,9 @@ class ChatUI(QWidget):
         self.btn_settings = QPushButton("Settings"); self.btn_settings.clicked.connect(self._open_settings)
         self.btn_history  = QPushButton("History");  self.btn_history.clicked.connect(self._open_history)
         self.btn_clear    = QPushButton("Clear");    self.btn_clear.clicked.connect(self._clear)
-        for b in (self.btn_settings, self.btn_history, self.btn_clear):
+        self.btn_profile  = QPushButton("Profile");  self.btn_profile.clicked.connect(self._open_profile_dialog)
+        self.btn_memclr   = QPushButton("ClearMem"); self.btn_memclr.clicked.connect(self._clear_memory_current)
+        for b in (self.btn_settings, self.btn_history, self.btn_clear, self.btn_profile, self.btn_memclr):
             b.setFixedHeight(28); b.setCursor(Qt.PointingHandCursor)
             b.setStyleSheet(
                 "QPushButton{background:#1C2238;border:1px solid #2D3550;border-radius:8px;color:#EAF2FF;padding:2px 10px;}"
@@ -72,12 +88,16 @@ class ChatUI(QWidget):
             )
         top.addWidget(self.title); top.addStretch(1)
         top.addWidget(self.btn_settings); top.addWidget(self.btn_history)
+        top.addWidget(self.btn_clear); top.addWidget(self.btn_profile)
         top.addWidget(self.btn_clear); top.addWidget(self.status)
         root.addLayout(top)
+
+        self.btn_memclr.setEnabled(False)
 
         line = QFrame(); line.setFrameShape(QFrame.HLine); line.setStyleSheet("color:#2A314A;")
         root.addWidget(line)
 
+        # chat list
         self.list = QListWidget()
         self.list.setSpacing(6)
         self.list.setUniformItemSizes(False)
@@ -93,13 +113,30 @@ class ChatUI(QWidget):
         self.typ_lbl.setStyleSheet("color:#A5AFBF; font:13px 'Inter'; padding-left:6px;")
         root.addWidget(self.typ_lbl, 0, Qt.AlignLeft)
 
+        # input row + model dropdown
         bottom = QHBoxLayout(); bottom.setSpacing(8)
+
         self.inp = QLineEdit(); self.inp.setPlaceholderText("Ketik pesan…")
         self.inp.setStyleSheet(
             "QLineEdit{background:#121A31;border:1px solid #2D3550;border-radius:10px;padding:12px;color:#EAF2FF;font:15px 'Segoe UI','Inter';}"
             "QLineEdit:focus{border-color:#5CE1E6;}"
         )
         self.inp.returnPressed.connect(self._send)
+
+        # dropdown model (pesan tampil hanya saat user memilih)
+        self.model_box = QComboBox()
+        self.model_box.setFixedHeight(44)
+        self.model_box.setMinimumWidth(180)
+        self.model_box.setStyleSheet(
+            "QComboBox{background:#121A31;border:1px solid #2D3550;"
+            "border-radius:10px;color:#EAF2FF;padding:8px 12px;font:15px 'Inter';}"
+            "QComboBox::drop-down{border:none;}"
+        )
+        # placeholder awal agar tidak kosong sebelum _load_models()
+        self.model_box.blockSignals(True)
+        self.model_box.addItem(self.client.model or "gemma3:4b")
+        self.model_box.blockSignals(False)
+        self.model_box.activated.connect(self._on_model_activated)
 
         self.btn_send = QPushButton("Kirim"); self.btn_send.setFixedHeight(44)
         self.btn_send.clicked.connect(self._send)
@@ -108,18 +145,71 @@ class ChatUI(QWidget):
             "QPushButton:hover{background:#1C2A4D;}"
             "QPushButton:disabled{color:#6B7A9A;}"
         )
-        bottom.addWidget(self.inp, 1); bottom.addWidget(self.btn_send)
+
+        bottom.addWidget(self.inp, 1)
+        bottom.addWidget(self.model_box, 0)
+        bottom.addWidget(self.btn_send, 0)
         root.addLayout(bottom)
 
+        # timers
         self._health = QTimer(self); self._health.setInterval(1200)
         self._health.timeout.connect(self._ping); self._health.start()
         self._typing = QTimer(self); self._typing.setInterval(350)
         self._typing.timeout.connect(self._tick); self._phase=0
 
+        # load daftar model (isi combobox & set default tanpa memicu pesan)
+        self._load_models()
+
+        # boot
         self._ensure_backend()
         self._add_msg("ai", f"Halo {self.identity.get('user_name','sayang')}~  Aku {self.identity.get('ai_name','Changli')}. Tulis pesanmu ya...")
 
         self._ensure_history_state()
+        
+    # ===================== Model Dropdown Helpers =====================
+
+    def _load_models(self):
+        """Ambil daftar model dari backend /models lalu isi combo box."""
+        try:
+            data = self.client.get_models()           # { "models": [...], "default": "gemma3:4b" }
+            models = data.get("models", [])
+            default = data.get("default", self.client.model or "gemma3:4b")
+
+            # normalisasi supaya list[str]
+            if isinstance(models, str):
+                models = [models]
+            elif isinstance(models, dict):
+                models = list(models.keys())
+            elif not isinstance(models, (list, tuple)):
+                models = []
+            models = [str(m) for m in models if isinstance(m, (str, bytes)) and str(m).strip()]
+
+            self.model_box.blockSignals(True)  # jangan munculkan pesan saat set programatis
+            self.model_box.clear()
+            if models:
+                self.model_box.addItems(models)
+                if default in models:
+                    self.model_box.setCurrentText(default)
+                    self.client.model = default
+                elif self.client.model in models:
+                    self.model_box.setCurrentText(self.client.model)
+            else:
+                self.model_box.addItem(self.client.model or "gemma3:4b")
+            self.model_box.blockSignals(False)
+        except Exception as e:
+            self._system(f"⚠️ Gagal memuat daftar model: {e}")
+            self.model_box.blockSignals(True)
+            self.model_box.clear()
+            self.model_box.addItem(self.client.model or "gemma3:4b")
+            self.model_box.blockSignals(False)
+
+    def _on_model_activated(self, index: int):
+        text = self.model_box.itemText(index)
+        if text and text != getattr(self.client, "model", None):
+            self.client.model = text
+            self._system(f"Model set to: {text}")
+
+    # ===================== General Helpers =====================
 
     def _load_json(self, path, fallback):
         try:
@@ -170,7 +260,6 @@ class ChatUI(QWidget):
     def _open_identity_dialog(self):
         def fetch_default_prompt(user_name: str) -> str:
             cfg = self.client.get_config()
-
             text = cfg.get("custom_prompt", "")
             return text.replace("{user_name}", user_name or "sayang")
 
@@ -185,11 +274,75 @@ class ChatUI(QWidget):
             self._save_json(IDENTITY_FILE, self.identity)
             self.setWindowTitle(f"{self.identity['ai_name']} — Local Chat UI")
             self.title.setText(f"{self.identity['ai_name']} — Local Chat UI")
-            self.client.set_identity(self.identity["user_name"], self.identity.get("custom_prompt",""), self.identity.get("ai_name","Changli"))
+            self.client.set_identity(
+                self.identity["user_name"],
+                self.identity.get("custom_prompt",""),
+                self.identity.get("ai_name","Changli"),
+                self.client.model
+            )
             self._system("Identity & Prompt updated.")
 
     def _clear(self):
         self._start_new_session()
+
+    def _clear_memory_current(self):
+        if not self.client.chat_id:
+            self._system("⚠️ Belum ada chat aktif. Kirim pesan dulu baru bisa clear memory.")
+            return
+        try:
+            self.client.clear_memory(self.client.chat_id)
+            self._system("✅ Memory untuk chat ini sudah dihapus.")
+        except Exception as e:
+            self._system(f"⚠️ Gagal menghapus memory: {e}")
+
+    def _open_profile_dialog(self):
+        dlg = QDialog(self); 
+
+        # >>> pakai nama AI dari identity (fallback ke "AI")
+        ai_display = (self.identity.get("ai_name") or "AI").strip()
+
+        dlg.setWindowTitle(f"User Profile — {ai_display}")
+        lay = QVBoxLayout(dlg); lay.setContentsMargins(12,12,12,12); lay.setSpacing(8)
+
+        # muat profile sekarang
+        about = ""; job = ""
+        try:
+            prof = self.client.get_profile()
+            about = prof.get("about","")
+            job   = prof.get("job","")
+        except Exception:
+            pass
+
+        # >>> ganti label "ChatGPT" jadi nama AI yang aktif
+        lab1 = QLabel(f"Anything else {ai_display} should know about you?")
+        # (kalau mau versi Indo:)
+        # lab1 = QLabel(f"Ada hal lain yang perlu {ai_display} tahu tentang kamu?")
+
+        txt_about = QTextEdit(); txt_about.setPlainText(about)
+        txt_about.setFixedHeight(110)
+        txt_about.setStyleSheet("QTextEdit{background:#121A31;border:1px solid #2D3550;border-radius:8px;color:#EAF2FF;padding:8px;}")
+
+        lab2 = QLabel("What do you do?")
+        in_job = QLineEdit(); in_job.setText(job)
+        in_job.setStyleSheet("QLineEdit{background:#121A31;border:1px solid #2D3550;border-radius:8px;color:#EAF2FF;padding:8px;}")
+
+        btn_row = QHBoxLayout()
+        btn_ok = QPushButton("Save"); btn_ok.clicked.connect(dlg.accept)
+        btn_cancel = QPushButton("Cancel"); btn_cancel.clicked.connect(dlg.reject)
+        for b in (btn_ok, btn_cancel):
+            b.setStyleSheet("QPushButton{background:#18233F;border:1px solid #2D3550;border-radius:8px;color:#EAF2FF;padding:6px 14px;}")
+        btn_row.addStretch(1); btn_row.addWidget(btn_cancel); btn_row.addWidget(btn_ok)
+
+        lay.addWidget(lab1); lay.addWidget(txt_about)
+        lay.addWidget(lab2); lay.addWidget(in_job)
+        lay.addLayout(btn_row)
+
+        if dlg.exec() == QDialog.Accepted:
+            try:
+                self.client.save_profile(txt_about.toPlainText().strip(), in_job.text().strip())
+                self._system("✅ Profile disimpan. (Ingat lintas chat)")
+            except Exception as e:
+                self._system(f"⚠️ Gagal simpan profile: {e}")
 
     def _ensure_backend(self):
         if self.client.healthy(): return
@@ -224,7 +377,7 @@ class ChatUI(QWidget):
         self._record_first_user_title(msg)
         self.btn_send.setEnabled(False)
         self._set_typing(True)
-        self.worker.client = self.client 
+        self.worker.client = self.client
         self.worker.send(msg)
 
     def _on_ai(self, role, text):
@@ -244,7 +397,7 @@ class ChatUI(QWidget):
         if on:
             self._phase = 0
             self.typ_lbl.setText(f"{self.identity.get('ai_name','Changli')} is typing")
-            self.typ_lbl.setVisible(True); 
+            self.typ_lbl.setVisible(True)
             self._typing.start()
         else:
             self._typing.stop(); self.typ_lbl.setVisible(False)
@@ -252,6 +405,8 @@ class ChatUI(QWidget):
     def _tick(self):
         dots = "." * (self._phase % 4); self._phase += 1
         self.typ_lbl.setText(f"{self.identity.get('ai_name','Changli')} is typing{dots}")
+
+    # ---------------- History persistence ----------------
 
     def _load_history(self):
         try:
@@ -269,6 +424,29 @@ class ChatUI(QWidget):
         except Exception:
             pass
 
+    def _load_and_render_history(self, chat_id: str):
+        try:
+            data = self.client.get_history(chat_id)
+            hist = data.get("history", [])
+            self._render_history_list(hist)
+            self._current_session_id = chat_id
+            self.client.chat_id = chat_id
+            self.btn_memclr.setEnabled(True)
+
+            m = data.get("model")
+            if m:
+                if self.model_box.findText(m) == -1:
+                    self.model_box.addItem(m)
+                self.model_box.blockSignals(True)
+                self.model_box.setCurrentText(m)
+                self.model_box.blockSignals(False)
+                self.client.model = m
+
+            self._touch_session_updated()
+            self._system("Loaded chat history.")
+        except Exception as e:
+            self._system(f"⚠️ Gagal memuat history: {e}")
+
     def _ensure_history_state(self):
         if not hasattr(self, "_history"):
             self._history = self._load_history()
@@ -283,6 +461,7 @@ class ChatUI(QWidget):
         self._pending_title = None
         self.list.clear()
         self._system("New chat started.")
+        self.btn_memclr.setEnabled(False)
 
     def _record_first_user_title(self, msg_text: str):
         if self._current_session_id is None and self.client.chat_id is None:
@@ -303,6 +482,8 @@ class ChatUI(QWidget):
                 self._save_history()
             else:
                 self._current_session_id = sid
+
+            self.btn_memclr.setEnabled(True)
 
     def _touch_session_updated(self):
         if getattr(self, "_current_session_id", None) and self._current_session_id in self._history:
@@ -331,18 +512,6 @@ class ChatUI(QWidget):
             except Exception:
                 continue
         self.list.scrollToBottom()
-
-    def _load_and_render_history(self, chat_id: str):
-        try:
-            data = self.client.get_history(chat_id)
-            hist = data.get("history", [])
-            self._render_history_list(hist)
-            self._current_session_id = chat_id
-            self.client.chat_id = chat_id
-            self._touch_session_updated()
-            self._system("Loaded chat history.")
-        except Exception as e:
-            self._system(f"⚠️ Gagal memuat history: {e}")
 
     def _open_history(self):
         dlg = ChatHistoryDialog(self, self._history.copy())

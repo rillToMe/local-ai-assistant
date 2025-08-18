@@ -1,3 +1,50 @@
 [
-  
+  {
+    "id": "b2bbe8e2-e309-4890-becd-1ce9b5d50718",
+    "user_name": "sayang",
+    "ai_name": "Changli",
+    "model": "gemma3:4b",
+    "custom_prompt": "Kamu adalah AI asisten biasa. Jawab dengan ramah, jelas, dan sederhana dalam bahasa Indonesia.",
+    "history": [
+      {
+        "user": "gimana siang ini, senang gk?",
+        "changli": "Sayang, lumayan lah. Cerah² gitu."
+      },
+      {
+        "user": "sore nanti kita jalan jalan yuk!",
+        "changli": "Sayang, ide bagus banget!"
+      },
+      {
+        "user": "malam nya kita ngapain ya?",
+        "changli": "Sayang, mau ngapain aja nih?"
+      },
+      {
+        "user": "nonton film?",
+        "changli": "Sayang, oke deh!"
+      },
+      {
+        "user": "kamu ada rencana gk?",
+        "changli": "Sayang, lagi banyak nih."
+      },
+      {
+        "user": "apa aja?",
+        "changli": "Sayang, lagi meeting sama temen, mau makan malam, terus mau nulis cerita."
+      },
+      {
+        "user": "kamu ingat gk apa aja yg kita bicarain?",
+        "changli": "Sayang, iya kok inget banget!"
+      },
+      {
+        "user": "apa aja?",
+        "changli": "Sayang, kita ngobrol soal nonton film, meeting sama temen, terus mau nulis cerita."
+      },
+      {
+        "user": "jalan jalan?",
+        "changli": "Sayang, oke deh! Mau ke mana?"
+      }
+    ],
+    "memory_summery": "",
+    "memory_facts": [],
+    "last_updated": "2025-08-18T14:49:57"
+  }
 ]
