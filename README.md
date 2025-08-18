@@ -60,6 +60,10 @@ local-ai-assistant/
 └─ README.md                 
 ```
 
+## 🏗 Architecture
+
+![Architecture Diagram](assets/architecture_diagram.png)
+
 ---
 
 ## ⚡ Features
