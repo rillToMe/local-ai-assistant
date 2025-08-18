@@ -51,7 +51,6 @@ class ChatUI(QWidget):
         self.setWindowTitle(f"{self.identity.get('ai_name','Changli')} — Local Chat UI")
         self.setStyleSheet("QWidget#ChatWindow{background:#0B0F1A;}")
 
-        # client & worker
         self.client = Client(
             API_BASE,
             user_name=self.identity["user_name"],
@@ -65,10 +64,8 @@ class ChatUI(QWidget):
         self.worker.done.connect(self._on_ai)
         self.worker.error.connect(self._on_err)
 
-        # ======= UI LAYOUT =======
         root = QVBoxLayout(self); root.setContentsMargins(12,12,12,12); root.setSpacing(8)
 
-        # header
         top = QHBoxLayout(); top.setSpacing(8)
         self.title = QLabel(f"{self.identity.get('ai_name','Changli')} — Local Chat UI")
         self.title.setStyleSheet("color:#EAF2FF;font:700 18px 'Segoe UI','Inter';")
@@ -97,7 +94,6 @@ class ChatUI(QWidget):
         line = QFrame(); line.setFrameShape(QFrame.HLine); line.setStyleSheet("color:#2A314A;")
         root.addWidget(line)
 
-        # chat list
         self.list = QListWidget()
         self.list.setSpacing(6)
         self.list.setUniformItemSizes(False)
@@ -113,7 +109,6 @@ class ChatUI(QWidget):
         self.typ_lbl.setStyleSheet("color:#A5AFBF; font:13px 'Inter'; padding-left:6px;")
         root.addWidget(self.typ_lbl, 0, Qt.AlignLeft)
 
-        # input row + model dropdown
         bottom = QHBoxLayout(); bottom.setSpacing(8)
 
         self.inp = QLineEdit(); self.inp.setPlaceholderText("Ketik pesan…")
@@ -123,7 +118,6 @@ class ChatUI(QWidget):
         )
         self.inp.returnPressed.connect(self._send)
 
-        # dropdown model (pesan tampil hanya saat user memilih)
         self.model_box = QComboBox()
         self.model_box.setFixedHeight(44)
         self.model_box.setMinimumWidth(180)
@@ -132,7 +126,6 @@ class ChatUI(QWidget):
             "border-radius:10px;color:#EAF2FF;padding:8px 12px;font:15px 'Inter';}"
             "QComboBox::drop-down{border:none;}"
         )
-        # placeholder awal agar tidak kosong sebelum _load_models()
         self.model_box.blockSignals(True)
         self.model_box.addItem(self.client.model or "gemma3:4b")
         self.model_box.blockSignals(False)
@@ -151,31 +144,25 @@ class ChatUI(QWidget):
         bottom.addWidget(self.btn_send, 0)
         root.addLayout(bottom)
 
-        # timers
         self._health = QTimer(self); self._health.setInterval(1200)
         self._health.timeout.connect(self._ping); self._health.start()
         self._typing = QTimer(self); self._typing.setInterval(350)
         self._typing.timeout.connect(self._tick); self._phase=0
 
-        # load daftar model (isi combobox & set default tanpa memicu pesan)
         self._load_models()
 
-        # boot
         self._ensure_backend()
         self._add_msg("ai", f"Halo {self.identity.get('user_name','sayang')}~  Aku {self.identity.get('ai_name','Changli')}. Tulis pesanmu ya...")
 
         self._ensure_history_state()
-        
-    # ===================== Model Dropdown Helpers =====================
 
     def _load_models(self):
         """Ambil daftar model dari backend /models lalu isi combo box."""
         try:
-            data = self.client.get_models()           # { "models": [...], "default": "gemma3:4b" }
+            data = self.client.get_models()          
             models = data.get("models", [])
             default = data.get("default", self.client.model or "gemma3:4b")
-
-            # normalisasi supaya list[str]
+            
             if isinstance(models, str):
                 models = [models]
             elif isinstance(models, dict):
@@ -184,7 +171,7 @@ class ChatUI(QWidget):
                 models = []
             models = [str(m) for m in models if isinstance(m, (str, bytes)) and str(m).strip()]
 
-            self.model_box.blockSignals(True)  # jangan munculkan pesan saat set programatis
+            self.model_box.blockSignals(True) 
             self.model_box.clear()
             if models:
                 self.model_box.addItems(models)
@@ -208,8 +195,6 @@ class ChatUI(QWidget):
         if text and text != getattr(self.client, "model", None):
             self.client.model = text
             self._system(f"Model set to: {text}")
-
-    # ===================== General Helpers =====================
 
     def _load_json(self, path, fallback):
         try:
@@ -245,7 +230,6 @@ class ChatUI(QWidget):
         else:
             self.setStyleSheet(f"QWidget#ChatWindow{{background:{cfg.get('bg_color', '#0B0F1A')};}}")
 
-    #setting
     def _open_settings(self):
         def open_identity():
             settings_dialog.done(QDialog.Accepted)
@@ -298,13 +282,11 @@ class ChatUI(QWidget):
     def _open_profile_dialog(self):
         dlg = QDialog(self); 
 
-        # >>> pakai nama AI dari identity (fallback ke "AI")
         ai_display = (self.identity.get("ai_name") or "AI").strip()
 
         dlg.setWindowTitle(f"User Profile — {ai_display}")
         lay = QVBoxLayout(dlg); lay.setContentsMargins(12,12,12,12); lay.setSpacing(8)
 
-        # muat profile sekarang
         about = ""; job = ""
         try:
             prof = self.client.get_profile()
@@ -313,10 +295,7 @@ class ChatUI(QWidget):
         except Exception:
             pass
 
-        # >>> ganti label "ChatGPT" jadi nama AI yang aktif
         lab1 = QLabel(f"Anything else {ai_display} should know about you?")
-        # (kalau mau versi Indo:)
-        # lab1 = QLabel(f"Ada hal lain yang perlu {ai_display} tahu tentang kamu?")
 
         txt_about = QTextEdit(); txt_about.setPlainText(about)
         txt_about.setFixedHeight(110)
@@ -405,8 +384,6 @@ class ChatUI(QWidget):
     def _tick(self):
         dots = "." * (self._phase % 4); self._phase += 1
         self.typ_lbl.setText(f"{self.identity.get('ai_name','Changli')} is typing{dots}")
-
-    # ---------------- History persistence ----------------
 
     def _load_history(self):
         try:
@@ -564,3 +541,4 @@ class ChatUI(QWidget):
         item = QListWidgetItem(f"   {text}")
         item.setForeground(QColor("#A5AFBF"))
         self.list.addItem(item); self.list.scrollToBottom()
+
