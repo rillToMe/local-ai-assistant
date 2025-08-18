@@ -1,11 +1,5 @@
 # Local AI Assistant Changli UI
-
-![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)  
-![Flask](https://img.shields.io/badge/Flask-2.3-lightgrey?logo=flask)  
-![PySide6](https://img.shields.io/badge/PySide6-Qt-brightgreen?logo=qt)  
-![Ollama](https://img.shields.io/badge/Ollama-AI-orange?logo=openai)  
-![Status](https://img.shields.io/badge/Status-Development-red)  
-![License](https://img.shields.io/badge/License-MIT-yellow)
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)  ![Flask](https://img.shields.io/badge/Flask-2.3-lightgrey?logo=flask)  ![PySide6](https://img.shields.io/badge/PySide6-Qt-brightgreen?logo=qt)  ![Ollama](https://img.shields.io/badge/Ollama-AI-orange?logo=openai)  ![Status](https://img.shields.io/badge/Status-Development-red)  ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 🚧 **Status:** This project is still in **development**, so expect bugs, incomplete features, and potential breaking changes. 🚧
 
