@@ -1,16 +1,16 @@
-# Local Chat — Changli UI
+# Local AI Assistant — Changli UI
 
 🚧 **Status:** This project is still in **development**, so expect bugs, incomplete features, and potential breaking changes. 🚧
 
 ---
 
 ## 📖 Description
-Local Chat is an **offline/local AI chat application** featuring:
-- **Backend** built with Flask → for API communication and chat storage.
-- **Frontend (UI)** built with PySide6 (Qt) → for an interactive chat interface.
-- **Ollama Integration** → to run local AI models (example: `gemma3:4b`).
+Local AI Assistant is an **offline/local AI chat application** featuring:
+- **Backend** built with Flask → API communication and chat storage.
+- **Frontend (UI)** built with PySide6 (Qt) → interactive chat interface.
+- **Ollama Integration** → run local AI models (default: `gemma3:4b`, now supports model selection).
 
-This project is designed to run AI **fully locally**, with customizable identity, persona, and chat history.
+This project is designed to run AI **fully locally**, with customizable identity, persona, profile, memory, and chat history.
 
 ---
 
@@ -53,9 +53,11 @@ local-ai-assistant/
 - 🖥 **Modern UI** using PySide6 (Qt)
 - 📝 **Chat History** → rename, delete, or continue past sessions
 - 🎭 **Custom Persona** → change AI name, user name, and prompt
+- 👤 **Profile System** → add personal info (e.g. *What do you do*, *Anything else the AI should know*)
+- 🧠 **Chat Memory** → AI remembers up to **8 previous messages**
 - 🎨 **Custom Background** → solid color or custom image
 - ⚙️ **Flask Backend** with `/chat`, `/chats`, `/config` endpoints
-- 🤖 **Ollama Integration** → run local AI models such as `gemma3:4b`
+- 🤖 **Ollama Integration** → run local AI models; default `gemma3:4b`, now supports **model selection**
 - 📂 All data & configs stored locally under `data/`
 
 ---
@@ -64,7 +66,7 @@ local-ai-assistant/
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/rillToMe/local-chat.git
+git clone https://github.com/rillToMe/local-ai-assistant.git
 cd local-ai-assistant
 ```
 
@@ -86,7 +88,7 @@ pip install -r requirements.txt
 - `requests`
 - `PySide6`
 
-> ⚠️ **Note**: Make sure you have installed **[Ollama](https://ollama.ai/)** and the required model (`gemma3:4b`).
+> ⚠️ **Note**: Make sure you have installed **[Ollama](https://ollama.ai/)** and the required models (`gemma3:4b` by default). Other models can be selected if installed.
 
 ### 4. Run the App
 ```bash
@@ -99,23 +101,24 @@ python app.py
 ---
 
 ## 🎮 Usage
-- Click **Settings** → change background or update **Identity & Prompt**
+- Click **Settings** → change background, update **Identity & Prompt**
 - Click **History** → view, rename, or continue previous sessions
-- Click **Clear** → start a new conversation
+- Click **Profile** → add info about yourself (used by AI in responses)
 - Default AI identity is **Changli** (can be changed via settings)
+- Choose available Ollama models via **Model Selection**
 
 ---
 
 ## 📌 Roadmap / Todo
 - [ ] Fix UI crash bugs
-- [ ] Add model selection from UI (Ollama integration)
-- [ ] Add chat export/import
 - [ ] Add multi-tab chat support
+- [ ] Add chat export/import
 - [ ] Optimize performance for long requests
+- [ ] Expand model integration beyond Ollama
 
 ---
 
 ## ⚠️ Notes
 - This is still in **early development**, expect frequent bugs and issues  
 - UI/UX is minimal for now, focused on core functionality  
-- Default persona is simple, can be extended with custom prompts  
+- Default persona is simple, but can be extended with custom prompts  
