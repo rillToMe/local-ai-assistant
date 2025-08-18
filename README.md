@@ -1,4 +1,4 @@
-# Local AI Assistant — Changli UI
+# Local AI Assistant Changli UI
 
 🚧 **Status:** This project is still in **development**, so expect bugs, incomplete features, and potential breaking changes. 🚧
 
