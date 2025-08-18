@@ -1,7 +1,19 @@
-# Local AI Assistant Changli UI
+# Local AI Assistant - Changli UI
 ![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python)  ![Flask](https://img.shields.io/badge/Flask-2.3-lightgrey?logo=flask)  ![PySide6](https://img.shields.io/badge/PySide6-Qt-brightgreen?logo=qt)  ![Ollama](https://img.shields.io/badge/Ollama-AI-orange?logo=openai)  ![Status](https://img.shields.io/badge/Status-Development-red)  ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-🚧 **Status:** This project is still in **development**, so expect bugs, incomplete features, & potential breaking changes. 🚧
+
+---
+
+
+[![Gemma Docs](https://img.shields.io/badge/Gemma-Docs-blue)](https://ai.google.dev/gemma/docs)
+[![Qwen HF](https://img.shields.io/badge/Qwen-HuggingFace-orange)](https://huggingface.co/Qwen)
+[![DeepSeek HF](https://img.shields.io/badge/DeepSeek-HuggingFace-green)](https://huggingface.co/deepseek-ai)
+[![GPT-OSS](https://img.shields.io/badge/GPT--OSS-Research-purple)](https://openai.com/research/gpt-oss)
+[![Ollama Models](https://img.shields.io/badge/Ollama-Models-black)](https://ollama.com/library)
+
+---
+
+🚧 **Status:** This project is still in **development**, so expect bugs, incomplete features, and potential breaking changes. 🚧
 
 ---
 
@@ -107,6 +119,25 @@ python app.py
 - Click **Profile** → add info about yourself (used by AI in responses)
 - Default AI identity is **Changli** (can be changed via settings)
 - Choose available Ollama models via **Model Selection**
+
+---
+
+## 🧩 Model Recommendations  
+
+Based on official benchmarks and community tests:  
+
+| Model            | Min RAM (CPU-only)      | Approx. GPU VRAM (BF16 / 4-bit) | Notes |
+|------------------|--------------------------|----------------------------------|-------|
+| **gemma3:1b**    | ≥ 2 GB RAM               | ~1.5 GB / ~0.9 GB                | Lightweight - runs on old notebooks, but slow (~7–10 tokens/sec) [getdeploying.com](https://getdeploying.com/guides/local-gemma3?utm_source=chatgpt.com), [windowscentral.com](https://www.windowscentral.com/artificial-intelligence/my-seven-year-old-mid-range-laptop-runs-local-ai?utm_source=chatgpt.com) |
+| **qwen3:1.8b**   | ≥ 2 GB RAM               | ~2 GB / ~1 GB (est.)             | Slightly better reasoning - light enough for laptops |
+| **gemma3:4b**    | ≥ 4 GB RAM               | ~6.4 GB / ~3.4 GB                | Recommended default - good speed & quality [getdeploying.com](https://getdeploying.com/guides/local-gemma3?utm_source=chatgpt.com), [ai.google.dev](https://ai.google.dev/gemma/docs/core?utm_source=chatgpt.com) |
+| **qwen3:4b**     | ≥ 4 GB RAM               | ~6 GB / ~3 GB (est.)             | Balanced - strong chat & reasoning |
+| **gemma3:12b**   | ≥ 9 GB RAM               | ~20 GB / ~8.7 GB                 | Requires strong GPU or high RA[getdeploying.com](https://getdeploying.com/guides/local-gemma3?utm_source=chatgpt.com), [ai.google.dev](https://ai.google.dev/gemma/docs/core?utm_source=chatgpt.com) |
+| **qwen3:8b**     | ≥ 9 GB RAM               | ~18 GB / ~8 GB (est.)            | Good quality & context |
+| **deepseek-r1:8b** | ≥ 9 GB RAM             | ~18 GB / ~8 GB (est.)            | Specialized reasoning |
+| **gemma3:27b**   | ≥ 18 GB RAM              | ~46 GB / ~21 GB                  | Heavy - best on high-end GPUs or servers [getdeploying.com](https://getdeploying.com/guides/local-gemma3?utm_source=chatgpt.com), [ai.google.dev](https://ai.google.dev/gemma/docs/core?utm_source=chatgpt.com) |
+| **gpt-oss:20b**  | ≥ 32 GB RAM              | ~40 GB / ~20 GB (est.)           | Large - better long context |
+| **gpt-oss:120b** | ≥ 128 GB RAM / Multi-GPU | ~120 GB+ / 60 GB+ (est.)         | Experimental - extremely heavy compute requirement |
 
 ---
 
