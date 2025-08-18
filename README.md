@@ -62,7 +62,7 @@ local-ai-assistant/
 
 ## 🏗 Architecture
 
-![Architecture Diagram](assets/architecture_diagram.png)
+![Architecture Diagram](asset/architecture_diagram.png)
 
 ---
 
