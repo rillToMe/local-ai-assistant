@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QColor
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem,
-    QFrame, QLabel, QLineEdit, QPushButton, QMessageBox, QDialog, QComboBox, 
+    QFrame, QLabel, QLineEdit, QPushButton, QMessageBox, QDialog, QComboBox,
     QTextEdit
 )
 
@@ -17,28 +17,59 @@ from .widgets.history import ChatHistoryDialog
 from .widgets.bubbles import make_tail_pixmap, esc_html
 from .widgets.identity import IdentityDialog
 
-# PATH
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-API_BASE      = os.environ.get("CHANG_LI_API", "http://127.0.0.1:5000").rstrip("/")
-BACKEND_APP   = os.environ.get("CHANG_LI_BACKEND", os.path.join(BASE_DIR, "app.py"))
+API_BASE    = os.environ.get("CHANG_LI_API", "http://127.0.0.1:5000").rstrip("/")
+BACKEND_APP = os.environ.get("CHANG_LI_BACKEND", os.path.join(BASE_DIR, "app.py"))
 
 UI_CFG_FILE   = os.path.join(DATA_DIR, "ui_chat_config.json")
 IDENTITY_FILE = os.path.join(DATA_DIR, "config.json")
 SESS_FILE     = os.path.join(DATA_DIR, "chat_sessions.json")
 
+_I18N = {"lang": "en_us", "keys": {}}
 
-#data
+_DEFAULT_I18N = {
+    "app.title": "{ai} — Local Chat UI",
+    "status.online": "Online",
+    "status.offline": "Offline",
+
+    "btn.settings": "Settings",
+    "btn.history": "History",
+    "btn.clear": "Clear",
+    "btn.profile": "Profile",
+    "btn.clearmem": "Clear Memory",
+    "btn.send": "Send",
+
+    "label.language": "Language",
+    "label.typing": "{ai} is typing",
+
+    "placeholder.input": "Type a message…",
+
+    "err.load.models": "Failed to load model list: {err}",
+    "err.nochat.clear": "No active chat yet. Send a message first to clear memory.",
+
+    "msg.model.set": "Model set to: {model}",
+    "msg.loaded.history": "Loaded chat history.",
+    "msg.newchat": "New chat started.",
+    "msg.mem.cleared": "Memory cleared for this chat."
+}
+
+def tr(key: str, **fmt):
+    k = key.replace("_", ".")
+    val = _I18N["keys"].get(k) or _DEFAULT_I18N.get(k) or k
+    try:
+        return val.format(**fmt)
+    except Exception:
+        return val
+
 @dataclass
 class Message:
     role: str
     text: str
     ts: datetime
 
-
-#chat window
 class ChatUI(QWidget):
     def __init__(self):
         super().__init__()
@@ -47,9 +78,6 @@ class ChatUI(QWidget):
 
         self.ui_config = self._load_json(UI_CFG_FILE, {"bg_mode":"color","bg_color":"#0E1426","bg_image":""})
         self.identity  = self._load_json(IDENTITY_FILE, {"ai_name":"Changli","user_name":"sayang","custom_prompt":""})
-
-        self.setWindowTitle(f"{self.identity.get('ai_name','Changli')} — Local Chat UI")
-        self.setStyleSheet("QWidget#ChatWindow{background:#0B0F1A;}")
 
         self.client = Client(
             API_BASE,
@@ -60,6 +88,18 @@ class ChatUI(QWidget):
         cfg = self.client.get_config()
         self.client.model = cfg.get("default_model", "gemma3:4b")
 
+        self._available_langs = cfg.get("available_languages", ["en_us","id"])
+        self._lang_names = cfg.get("language_names", {
+            "en_us":"English (US)","id":"Bahasa Indonesia","en_gb":"English (UK)",
+            "ja":"日本語 (Japanese)","ko":"한국어 (Korean)","zh":"中文（简体）",
+            "pt":"Português","es":"Español","ar":"العربية"
+        })
+        _I18N["lang"] = cfg.get("lang", "en_us")
+        self._reload_i18n(_I18N["lang"])
+
+        self.setWindowTitle(tr("app.title", ai=self.identity.get('ai_name','Changli')))
+        self.setStyleSheet("QWidget#ChatWindow{background:#0B0F1A;}")
+
         self.worker = Worker(self.client)
         self.worker.done.connect(self._on_ai)
         self.worker.error.connect(self._on_err)
@@ -67,26 +107,28 @@ class ChatUI(QWidget):
         root = QVBoxLayout(self); root.setContentsMargins(12,12,12,12); root.setSpacing(8)
 
         top = QHBoxLayout(); top.setSpacing(8)
-        self.title = QLabel(f"{self.identity.get('ai_name','Changli')} — Local Chat UI")
+        self.title = QLabel(tr("app.title", ai=self.identity.get('ai_name','Changli')))
         self.title.setStyleSheet("color:#EAF2FF;font:700 18px 'Segoe UI','Inter';")
-        self.status = QLabel("Offline"); self.status.setFixedWidth(80)
+        self.status = QLabel(tr("status.offline")); self.status.setFixedWidth(80)
         self.status.setStyleSheet("color:#FF678A;font:600 13px 'Inter';")
 
-        self.btn_settings = QPushButton("Settings"); self.btn_settings.clicked.connect(self._open_settings)
-        self.btn_history  = QPushButton("History");  self.btn_history.clicked.connect(self._open_history)
-        self.btn_clear    = QPushButton("Clear");    self.btn_clear.clicked.connect(self._clear)
-        self.btn_profile  = QPushButton("Profile");  self.btn_profile.clicked.connect(self._open_profile_dialog)
-        self.btn_memclr   = QPushButton("ClearMem"); self.btn_memclr.clicked.connect(self._clear_memory_current)
+        self.btn_settings = QPushButton(tr("btn.settings")); self.btn_settings.clicked.connect(self._open_settings)
+        self.btn_history  = QPushButton(tr("btn.history"));  self.btn_history.clicked.connect(self._open_history)
+        self.btn_clear    = QPushButton(tr("btn.clear"));    self.btn_clear.clicked.connect(self._clear)
+        self.btn_profile  = QPushButton(tr("btn.profile"));  self.btn_profile.clicked.connect(self._open_profile_dialog)
+        self.btn_memclr   = QPushButton(tr("btn.clearmem")); self.btn_memclr.clicked.connect(self._clear_memory_current)
+
         for b in (self.btn_settings, self.btn_history, self.btn_clear, self.btn_profile, self.btn_memclr):
             b.setFixedHeight(28); b.setCursor(Qt.PointingHandCursor)
             b.setStyleSheet(
                 "QPushButton{background:#1C2238;border:1px solid #2D3550;border-radius:8px;color:#EAF2FF;padding:2px 10px;}"
                 "QPushButton:hover{background:#233054;}"
             )
+
         top.addWidget(self.title); top.addStretch(1)
         top.addWidget(self.btn_settings); top.addWidget(self.btn_history)
         top.addWidget(self.btn_clear); top.addWidget(self.btn_profile)
-        top.addWidget(self.btn_clear); top.addWidget(self.status)
+        top.addWidget(self.btn_memclr); top.addWidget(self.status)
         root.addLayout(top)
 
         self.btn_memclr.setEnabled(False)
@@ -111,7 +153,7 @@ class ChatUI(QWidget):
 
         bottom = QHBoxLayout(); bottom.setSpacing(8)
 
-        self.inp = QLineEdit(); self.inp.setPlaceholderText("Ketik pesan…")
+        self.inp = QLineEdit(); self.inp.setPlaceholderText(tr("placeholder.input"))
         self.inp.setStyleSheet(
             "QLineEdit{background:#121A31;border:1px solid #2D3550;border-radius:10px;padding:12px;color:#EAF2FF;font:15px 'Segoe UI','Inter';}"
             "QLineEdit:focus{border-color:#5CE1E6;}"
@@ -131,7 +173,7 @@ class ChatUI(QWidget):
         self.model_box.blockSignals(False)
         self.model_box.activated.connect(self._on_model_activated)
 
-        self.btn_send = QPushButton("Kirim"); self.btn_send.setFixedHeight(44)
+        self.btn_send = QPushButton(tr("btn.send")); self.btn_send.setFixedHeight(44)
         self.btn_send.clicked.connect(self._send)
         self.btn_send.setStyleSheet(
             "QPushButton{background:#18233F;border:1px solid #2D3550;border-radius:10px;color:#5CE1E6;font:600 15px 'Inter';padding:8px 18px;}"
@@ -155,14 +197,42 @@ class ChatUI(QWidget):
         self._add_msg("ai", f"Halo {self.identity.get('user_name','sayang')}~  Aku {self.identity.get('ai_name','Changli')}. Tulis pesanmu ya...")
 
         self._ensure_history_state()
+        self._apply_i18n_labels()
+
+    def _reload_i18n(self, lang: str):
+        try:
+            data = self.client.get_i18n(lang)
+            _I18N["lang"] = data.get("lang", lang)
+            _I18N["keys"] = data.get("keys", {})
+        except Exception:
+            _I18N["lang"] = lang
+            _I18N["keys"] = {}
+
+    def _apply_i18n_labels(self):
+        self.title.setText(tr("app.title", ai=self.identity.get('ai_name','Changli')))
+        self.btn_settings.setText(tr("btn.settings"))
+        self.btn_history.setText(tr("btn.history"))
+        self.btn_clear.setText(tr("btn.clear"))
+        self.btn_profile.setText(tr("btn.profile"))
+        self.btn_memclr.setText(tr("btn.clearmem"))
+        self.inp.setPlaceholderText(tr("placeholder.input"))
+        self.btn_send.setText(tr("btn.send"))
+
+    def _set_language(self, code: str):
+        try:
+            self.client.set_settings({"lang": code})
+            self._reload_i18n(code)
+            self._apply_i18n_labels()
+            self._system(f"Language set: {code}")
+        except Exception as e:
+            self._system(f"⚠️ Failed to set language: {e}")
 
     def _load_models(self):
-        """Ambil daftar model dari backend /models lalu isi combo box."""
         try:
-            data = self.client.get_models()          
+            data = self.client.get_models()
             models = data.get("models", [])
             default = data.get("default", self.client.model or "gemma3:4b")
-            
+
             if isinstance(models, str):
                 models = [models]
             elif isinstance(models, dict):
@@ -171,7 +241,7 @@ class ChatUI(QWidget):
                 models = []
             models = [str(m) for m in models if isinstance(m, (str, bytes)) and str(m).strip()]
 
-            self.model_box.blockSignals(True) 
+            self.model_box.blockSignals(True)
             self.model_box.clear()
             if models:
                 self.model_box.addItems(models)
@@ -184,7 +254,7 @@ class ChatUI(QWidget):
                 self.model_box.addItem(self.client.model or "gemma3:4b")
             self.model_box.blockSignals(False)
         except Exception as e:
-            self._system(f"⚠️ Gagal memuat daftar model: {e}")
+            self._system(tr("err.load.models", err=str(e)))
             self.model_box.blockSignals(True)
             self.model_box.clear()
             self.model_box.addItem(self.client.model or "gemma3:4b")
@@ -194,7 +264,7 @@ class ChatUI(QWidget):
         text = self.model_box.itemText(index)
         if text and text != getattr(self.client, "model", None):
             self.client.model = text
-            self._system(f"Model set to: {text}")
+            self._system(tr("msg.model.set", model=text))
 
     def _load_json(self, path, fallback):
         try:
@@ -235,7 +305,43 @@ class ChatUI(QWidget):
             settings_dialog.done(QDialog.Accepted)
             self._open_identity_dialog()
 
-        settings_dialog = ChatSettings(self, self.ui_config, on_open_identity=open_identity)
+        def open_language():
+            cfg = self.client.get_config()
+            langs_detail = cfg.get("available_languages_detail", [])
+            if not langs_detail:
+                codes = cfg.get("available_languages", self._available_langs)
+                langs_detail = [{"code": c, "name": self._lang_names.get(c, c)} for c in codes]
+            current_lang = cfg.get("lang", _I18N["lang"])
+
+            dlg = QDialog(self); dlg.setWindowTitle(tr("label.language"))
+            lay = QVBoxLayout(dlg); lay.setContentsMargins(12,12,12,12); lay.setSpacing(8)
+            lab = QLabel(tr("label.language")); lay.addWidget(lab)
+
+            cb = QComboBox()
+            for item in langs_detail:
+                cb.addItem(item.get("name", item.get("code")), item.get("code"))
+
+            idx = 0
+            for i, it in enumerate(langs_detail):
+                if it.get("code") == current_lang:
+                    idx = i; break
+            cb.setCurrentIndex(idx)
+            lay.addWidget(cb)
+
+            row = QHBoxLayout()
+            btn_cancel = QPushButton("Cancel"); btn_ok = QPushButton("Save")
+            btn_cancel.clicked.connect(dlg.reject); btn_ok.clicked.connect(dlg.accept)
+            row.addStretch(1); row.addWidget(btn_cancel); row.addWidget(btn_ok)
+            lay.addLayout(row)
+
+            if dlg.exec() == QDialog.Accepted:
+                code = cb.currentData()
+                if code and code != current_lang:
+                    self._set_language(code)
+
+        settings_dialog = ChatSettings(self, self.ui_config,
+                                       on_open_identity=open_identity,
+                                       on_open_language=open_language)
         if settings_dialog.exec() == QDialog.Accepted:
             self.ui_config = settings_dialog.result_config()
             self._apply_background(self.ui_config)
@@ -256,8 +362,8 @@ class ChatUI(QWidget):
         if dlg.exec() == QDialog.Accepted:
             self.identity = dlg.result_identity()
             self._save_json(IDENTITY_FILE, self.identity)
-            self.setWindowTitle(f"{self.identity['ai_name']} — Local Chat UI")
-            self.title.setText(f"{self.identity['ai_name']} — Local Chat UI")
+            self.setWindowTitle(tr("app.title", ai=self.identity['ai_name']))
+            self.title.setText(tr("app.title", ai=self.identity['ai_name']))
             self.client.set_identity(
                 self.identity["user_name"],
                 self.identity.get("custom_prompt",""),
@@ -271,19 +377,17 @@ class ChatUI(QWidget):
 
     def _clear_memory_current(self):
         if not self.client.chat_id:
-            self._system("⚠️ Belum ada chat aktif. Kirim pesan dulu baru bisa clear memory.")
+            self._system(tr("err.nochat.clear"))
             return
         try:
             self.client.clear_memory(self.client.chat_id)
-            self._system("✅ Memory untuk chat ini sudah dihapus.")
+            self._system(tr("msg.mem.cleared"))
         except Exception as e:
-            self._system(f"⚠️ Gagal menghapus memory: {e}")
+            self._system(f"⚠️ {e}")
 
     def _open_profile_dialog(self):
-        dlg = QDialog(self); 
-
+        dlg = QDialog(self)
         ai_display = (self.identity.get("ai_name") or "AI").strip()
-
         dlg.setWindowTitle(f"User Profile — {ai_display}")
         lay = QVBoxLayout(dlg); lay.setContentsMargins(12,12,12,12); lay.setSpacing(8)
 
@@ -296,7 +400,6 @@ class ChatUI(QWidget):
             pass
 
         lab1 = QLabel(f"Anything else {ai_display} should know about you?")
-
         txt_about = QTextEdit(); txt_about.setPlainText(about)
         txt_about.setFixedHeight(110)
         txt_about.setStyleSheet("QTextEdit{background:#121A31;border:1px solid #2D3550;border-radius:8px;color:#EAF2FF;padding:8px;}")
@@ -345,7 +448,7 @@ class ChatUI(QWidget):
 
     def _ping(self):
         online = self.client.healthy()
-        self.status.setText("Online" if online else "Offline")
+        self.status.setText(tr("status.online") if online else tr("status.offline"))
         self.status.setStyleSheet(f"color:{'#5CE1E6' if online else '#FF678A'};font:600 13px 'Inter';")
 
     def _send(self):
@@ -375,7 +478,7 @@ class ChatUI(QWidget):
     def _set_typing(self, on: bool):
         if on:
             self._phase = 0
-            self.typ_lbl.setText(f"{self.identity.get('ai_name','Changli')} is typing")
+            self.typ_lbl.setText(tr("label.typing", ai=self.identity.get('ai_name','Changli')))
             self.typ_lbl.setVisible(True)
             self._typing.start()
         else:
@@ -383,7 +486,7 @@ class ChatUI(QWidget):
 
     def _tick(self):
         dots = "." * (self._phase % 4); self._phase += 1
-        self.typ_lbl.setText(f"{self.identity.get('ai_name','Changli')} is typing{dots}")
+        self.typ_lbl.setText(tr("label.typing", ai=self.identity.get('ai_name','Changli')) + dots)
 
     def _load_history(self):
         try:
@@ -420,7 +523,7 @@ class ChatUI(QWidget):
                 self.client.model = m
 
             self._touch_session_updated()
-            self._system("Loaded chat history.")
+            self._system(tr("msg.loaded.history"))
         except Exception as e:
             self._system(f"⚠️ Gagal memuat history: {e}")
 
@@ -437,7 +540,7 @@ class ChatUI(QWidget):
         self._current_session_id = None
         self._pending_title = None
         self.list.clear()
-        self._system("New chat started.")
+        self._system(tr("msg.newchat"))
         self.btn_memclr.setEnabled(False)
 
     def _record_first_user_title(self, msg_text: str):
@@ -541,4 +644,3 @@ class ChatUI(QWidget):
         item = QListWidgetItem(f"   {text}")
         item.setForeground(QColor("#A5AFBF"))
         self.list.addItem(item); self.list.scrollToBottom()
-

@@ -13,6 +13,7 @@ Local AI Assistant is an **offline/local AI chat application** featuring:
 - **Backend** built with Flask → API communication and chat storage.
 - **Frontend (UI)** built with PySide6 (Qt) → interactive chat interface.
 - **Ollama Integration** → run local AI models (default: `gemma3:4b`, now supports model selection).
+- **Multi-language system** with 9 languages and layered fallback.
 
 This project is designed to run AI **fully locally**, with customizable identity, persona, profile, memory, and chat history.
 
@@ -24,8 +25,29 @@ local-ai-assistant/
 ├─ app.py                    
 │
 ├─ backend/
+│  ├─ i18n/
+│  │   ├─ ar.json
+│  │   ├─ en_gb.json
+│  │   ├─ en_us.json
+│  │   ├─ id.json
+│  │   ├─ es.json
+│  │   ├─ ja.json
+│  │   ├─ ko.json
+│  │   ├─ pt.json
+│  │   └─ zh.json
+│  ├─ locales/
+│  │   ├─ ar.json
+│  │   ├─ en_gb.json
+│  │   ├─ en_us.json
+│  │   ├─ id.json
+│  │   ├─ es.json
+│  │   ├─ ja.json
+│  │   ├─ ko.json
+│  │   ├─ pt.json
+│  │   └─ zh.json
 │  ├─ config.py      
 │  ├─ core.py           
+│  ├─ i18n.py           
 │  ├─ persona.py            
 │  ├─ storage.py             
 │  ├─ ollama_client.py       
@@ -35,7 +57,7 @@ local-ai-assistant/
 │  ├─ main.py               
 │  ├─ chat_window.py         
 │  ├─ client.py              
-│  ├─ worker.py              
+│  ├─ worker.py                            
 │  └─ widgets/              
 │     ├─ settings.py         
 │     ├─ history.py          
@@ -47,7 +69,8 @@ local-ai-assistant/
 │  ├─ chat_sessions.json
 │  ├─ ui_chat_config.json
 │  └─ config.json
-│
+├─ config.json
+├─ requirement.txt  
 └─ README.md                 
 ```
 
@@ -62,7 +85,8 @@ local-ai-assistant/
 - 📝 **Chat History** → rename, delete, or continue past sessions
 - 🎭 **Custom Persona** → change AI name, user name, and prompt
 - 👤 **Profile System** → add personal info (e.g. *What do you do*, *Anything else the AI should know*)
-- 🧠 **Chat Memory** → AI remembers up to **8 previous messages**
+- 🧠 **Chat Memory** → AI remembers up to **32 previous messages**
+- 🌍 **Multi-language Support** → 9 languages, native names in UI, with layered fallback (`en_us → id → target`)
 - 🎨 **Custom Background** → solid color or custom image
 - ⚙️ **Flask Backend** with `/chat`, `/chats`, `/config` endpoints
 - 🤖 **Ollama Integration** → run local AI models; default `gemma3:4b`, now supports **model selection**
@@ -109,11 +133,11 @@ python app.py
 ---
 
 ## 🎮 Usage
-- Click **Settings** → change background, update **Identity & Prompt**
-- Click **History** → view, rename, or continue previous sessions
-- Click **Profile** → add info about yourself (used by AI in responses)
-- Default AI identity is **Changli** (can be changed via settings)
-- Choose available Ollama models via **Model Selection**
+- **Settings** → change background, update **Identity & Prompt**
+- **History** → view, rename, or continue previous sessions
+- **Profile** → add info about yourself (used by AI in responses)
+- **Language** → choose UI language from 9 available
+- **Models** → select available Ollama models installed on your system
 
 ---
 

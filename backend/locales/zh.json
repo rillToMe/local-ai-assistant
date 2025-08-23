@@ -1,0 +1,20 @@
+{
+  "app.title": "{ai} — 本地聊天界面",
+  "status.online": "在线",
+  "status.offline": "离线",
+  "btn.settings": "设置",
+  "btn.history": "历史",
+  "btn.clear": "清除",
+  "btn.profile": "个人资料",
+  "btn.clearmem": "清除记忆",
+  "label.typing": "{ai} 正在输入",
+  "placeholder.input": "输入消息…",
+  "label.model": "模型",
+  "msg.newchat": "已开始新的聊天。",
+  "msg.loaded.history": "已加载聊天记录。",
+  "msg.model.set": "模型已设置为：{model}",
+  "err.load.models": "加载模型列表失败：{err}",
+  "err.nochat.clear": "还没有活动的聊天。请先发送一条消息。",
+  "msg.mem.cleared": "已清除此聊天的记忆。",
+  "label.language": "语言"
+}

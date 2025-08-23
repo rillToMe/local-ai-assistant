@@ -22,7 +22,6 @@ _META_RE = [
 ]
 
 def _filter_output(raw: str) -> str:
-    """Buang meta/label tanpa ngilangin konten. Pakai fallback kalau kepangkas habis."""
     if not raw:
         return "Sorry sayang, aku lagi bingung nih... 😢"
 
@@ -60,7 +59,6 @@ def _filter_output(raw: str) -> str:
     return "Sorry sayang, aku lagi bingung nih... 😢"
 
 def list_models() -> list[str]:
-    """Return list of availabe model names form ollama list."""
     if not os.path.exists(OLLAMA_PATH):
         return []
     env = os.environ.copy()

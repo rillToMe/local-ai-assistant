@@ -1,0 +1,20 @@
+{
+  "app.title": "{ai} — Chat Local",
+  "status.online": "Online",
+  "status.offline": "Offline",
+  "btn.settings": "Configurações",
+  "btn.history": "Histórico",
+  "btn.clear": "Limpar",
+  "btn.profile": "Perfil",
+  "btn.clearmem": "Limpar Memória",
+  "label.typing": "{ai} está digitando",
+  "placeholder.input": "Digite uma mensagem…",
+  "label.model": "Modelo",
+  "msg.newchat": "Novo chat iniciado.",
+  "msg.loaded.history": "Histórico carregado.",
+  "msg.model.set": "Modelo definido como: {model}",
+  "err.load.models": "Falha ao carregar a lista de modelos: {err}",
+  "err.nochat.clear": "Ainda não há um chat ativo. Envie uma mensagem primeiro.",
+  "msg.mem.cleared": "A memória deste chat foi limpa.",
+  "label.language": "Idioma"
+}

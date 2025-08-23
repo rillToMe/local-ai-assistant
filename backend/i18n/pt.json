@@ -1,0 +1,23 @@
+{
+  "lang": "pt",
+  "keys": {
+    "app.title": "{ai} — Chat Local",
+    "status.online": "Online",
+    "status.offline": "Offline",
+    "btn.settings": "Configurações",
+    "btn.history": "Histórico",
+    "btn.clear": "Limpar",
+    "btn.profile": "Perfil",
+    "btn.clearmem": "Limpar memória",
+    "btn.send": "Enviar",
+    "label.language": "Idioma",
+    "label.typing": "{ai} está digitando",
+    "placeholder.input": "Digite uma mensagem…",
+    "err.load.models": "Falha ao carregar a lista de modelos: {err}",
+    "err.nochat.clear": "Nenhum chat ativo. Envie uma mensagem antes de limpar a memória.",
+    "msg.model.set": "Modelo definido: {model}",
+    "msg.loaded.history": "Histórico carregado.",
+    "msg.newchat": "Novo chat iniciado.",
+    "msg.mem.cleared": "Memória limpa para este chat."
+  }
+}

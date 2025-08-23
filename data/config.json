@@ -1,5 +1,29 @@
 {
-  "ai_name": "Changli",
-  "user_name": "sayang",
-  "custom_prompt": "Kamu adalah AI asisten biasa. Jawab dengan ramah, jelas, dan sederhana dalam bahasa Indonesia."
+  "user_name": "Mate",
+  "ai_name": "Colder",
+  "default_model": "gemma3:4b",
+  "custom_prompt": "",
+  "lang": "en_us",
+  "available_languages": [
+    "en_us",
+    "id",
+    "en_gb",
+    "es",
+    "pt",
+    "zh",
+    "ja",
+    "ko",
+    "ar"
+  ],
+  "language_names": {
+    "en_us": "English (US)",
+    "id": "Bahasa Indonesia",
+    "en_gb": "English (UK)",
+    "es": "Español",
+    "pt": "Português",
+    "zh": "中文（简体）",
+    "ja": "日本語",
+    "ko": "한국어",
+    "ar": "العربية"
+  }
 }

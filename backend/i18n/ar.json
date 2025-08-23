@@ -1,0 +1,23 @@
+{
+  "lang": "ar",
+  "keys": {
+    "app.title": "{ai} — دردشة محلية",
+    "status.online": "متصل",
+    "status.offline": "غير متصل",
+    "btn.settings": "الإعدادات",
+    "btn.history": "السجل",
+    "btn.clear": "مسح",
+    "btn.profile": "الملف الشخصي",
+    "btn.clearmem": "مسح الذاكرة",
+    "btn.send": "إرسال",
+    "label.language": "اللغة",
+    "label.typing": "{ai} يكتب",
+    "placeholder.input": "اكتب رسالة…",
+    "err.load.models": "فشل تحميل قائمة النماذج: {err}",
+    "err.nochat.clear": "لا توجد محادثة نشطة. أرسل رسالة أولاً لمسح الذاكرة.",
+    "msg.model.set": "تم ضبط النموذج: {model}",
+    "msg.loaded.history": "تم تحميل سجل المحادثة.",
+    "msg.newchat": "تم بدء محادثة جديدة.",
+    "msg.mem.cleared": "تم مسح ذاكرة هذه المحادثة."
+  }
+}

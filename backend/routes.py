@@ -6,18 +6,133 @@ from . import storage
 from .persona import persona_prompt
 from .ollama_client import generate_text, list_models
 from .config import APP_CONFIG_FILE
+from .i18n import list_locales, list_locales_detail, load_locale
+from collections import OrderedDict
 
-# MEMORY AI
-MAX_WINDOW_TURNS = 8
-SUMMERY_EVERY = 4
+MAX_WINDOW_TURNS = 32
+SUMMERY_EVERY = 10
 MAX_FACTS = 12
 PROFILE_PATH = "profile.json"
 DEFAULT_PROFILE = {"about": "", "job": "", "facts": []}
 
+I18N_DIR = os.path.join(os.path.dirname(__file__), "i18n")
+DEFAULT_LANG = "en_us"
+LANG_ORDER = ["en_us", "id", "en_gb", "es", "pt", "zh", "ja", "ko", "ar"]
+LANG_NAMES = {
+    "en_us": "English (US)",
+    "id":    "Bahasa Indonesia",
+    "en_gb": "English (UK)",
+    "es":    "Español",
+    "pt":    "Português",
+    "zh":    "中文（简体）",
+    "ja":    "日本語",
+    "ko":    "한국어",
+    "ar":    "العربية",
+}
 
-def _system_header(user_name: str, ai_name: str):
+def _load_i18n(lang: str) -> dict:
+    code = (lang or DEFAULT_LANG).lower()
+    path = os.path.join(I18N_DIR, f"{code}.json")
+    if not os.path.exists(path):
+        code = DEFAULT_LANG
+        path = os.path.join(I18N_DIR, f"{code}.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return {"lang": data.get("lang", code), "keys": data.get("keys", {})}
+    except Exception:
+        return {"lang": code, "keys": {}}
+
+DEFAULT_CONFIG = {
+    "user_name": "User",
+    "ai_name": "AI",
+    "default_model": "gemma3:4b",
+    "custom_prompt": "Kamu adalah AI asisten biasa. Jawab dengan ramah, jelas, dan sederhana dalam bahasa Indonesia.",
+    "lang": DEFAULT_LANG,
+    "available_languages": LANG_ORDER,
+    "language_names": LANG_NAMES,
+}
+
+
+def _lang_items():
+    avail = list_locales()
+    head = [c for c in ["en_us","id"] if c in avail]
+    tail = sorted([c for c in avail if c not in head], key=lambda c: LANG_NAMES.get(c, c).lower())
+    ordered = head + tail
+    return [{"code": c, "name": LANG_NAMES.get(c, c)} for c in ordered]
+
+def _read_app_config():
+    cfg = DEFAULT_CONFIG.copy()
+    if os.path.exists(APP_CONFIG_FILE):
+        try:
+            with open(APP_CONFIG_FILE, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+                if isinstance(saved, dict):
+                    cfg.update(saved)
+        except Exception:
+            pass
+
+    avail = set(list_locales())
+    if cfg.get("lang") not in avail:
+        cfg["lang"] = "en_us" if "en_us" in avail else (next(iter(avail)) if avail else "en_us")
+    return cfg
+
+def _write_app_config(patch: dict):
+    cur = _read_app_config()
+    cur.update(patch or {})
+    try:
+        with open(APP_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(cur, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+@app.route('/config', methods=['GET'])
+def get_config():
+    cfg = _read_app_config()
+    cfg_out = {
+        "user_name": cfg["user_name"],
+        "ai_name": cfg["ai_name"],
+        "default_model": cfg["default_model"],
+        "custom_prompt": cfg["custom_prompt"],
+        "lang": cfg["lang"],
+        "available_languages": list_locales(),
+        "available_languages_detail": list_locales_detail(),
+    }
+    resp = jsonify(cfg_out)
+    resp.headers["Cache-Control"] = "public, max-age=60"
+    return resp
+
+@app.get("/i18n/<lang>")
+def get_i18n(lang):
+    return jsonify({"lang": (lang or "en_us").lower(), "keys": load_locale(lang)})
+
+@app.get("/settings")
+def get_settings():
+    cfg = _read_app_config()
+    return jsonify({
+        "lang": cfg.get("lang", DEFAULT_LANG),
+        "available_languages": LANG_ORDER,
+        "language_names": LANG_NAMES
+    })
+
+@app.post("/settings")
+def set_settings():
+    data = request.get_json(silent=True) or {}
+    patch = {}
+    if isinstance(data.get("lang"), str):
+        code = data["lang"].lower()
+        if code in list_locales(): 
+            patch["lang"] = code
+    if patch:
+        _write_app_config(patch)
+
+    lang = _read_app_config().get("lang", DEFAULT_LANG)
+    return jsonify({"ok": True, "lang": lang, "i18n": {"lang": lang, "keys": load_locale(lang)}})
+
+def _system_header(user_name: str, ai_name: str, lang: str):
     user = user_name or "sayang"
     ai   = ai_name   or "AI"
+    human = LANG_NAMES.get(lang, lang)
     return (
         f"<<SYSTEM>>\n"
         f"- The user's name is '{user}'. Always address them as '{user}'.\n"
@@ -27,38 +142,15 @@ def _system_header(user_name: str, ai_name: str):
         f"- IMPORTANT: Output ONLY the final reply text. "
         f"Do NOT include labels or meta like 'User:', 'Assistant:', 'System:', 'Analysis:', 'Reasoning:', "
         f"'The conversation:', or any explanations. No role headings, no step-by-step, no quotes of instructions.\n"
+        f"- Preferred language: {lang}. If the user's input is clearly in another language, mirror the user's language; otherwise default to {lang}.\n"
         f"<<END>>\n"
         f"User: siapa nama saya?\nAI: {user}\n"
         f"User: siapa nama kamu?\nAI: {ai}\n"
         f"When answering questions from {user}, the answers must be reasonable and easy to understand, complex, and not long-winded.\n"
-        f"Use the language specified by the {user}, but use Indonesian slang as the default.\n"
     )
 
-DEFAULT_CONFIG = {
-    "user_name": "User",
-    "ai_name": "AI",
-    "default_model": "gemma3:4b",
-    "custom_prompt": (
-        "Kamu adalah AI asisten biasa. "
-        "Jawab dengan ramah, jelas, dan sederhana dalam bahasa Indonesia."
-    )
-}
-@app.route('/config', methods=['GET'])
-def get_config():
-    config = DEFAULT_CONFIG.copy()
-    if os.path.exists("config.json"):
-        try:
-            with open("config.json","r",encoding="utf-8") as f:
-                saved = json.load(f)
-                config.update(saved)
-        except:
-            pass
-
-    return jsonify(config)
-
-#MEMORY HELPER
 def _build_memory_block(chat: dict) -> str:
-    summary = (chat.get("memory_summery") or "").strip()
+    summary = (chat.get("memory_summary") or "").strip()
     facts = chat.get("memory_facts") or []
     if not summary and not facts:
         return ""
@@ -66,12 +158,11 @@ def _build_memory_block(chat: dict) -> str:
     if summary:
         block += f"Summary: {summary}\n"
     if facts:
-        block += "Facts:\n" + "\n".join(f" - {str(x).strip()}" for x in facts if str(x).strip() + "\n")
+        block += "Facts:\n" + "\n".join(f" - {str(x).strip()}" for x in facts if str(x).strip())
     block += "<<END>>\n"
     return block
 
 def _recent_window_text(chat: dict, user_input: str) -> str:
-    """Ambil jendela percakapan terakhir + user input terbaru."""
     hist = chat.get("history", [])
     window = hist[-MAX_WINDOW_TURNS:] if MAX_WINDOW_TURNS > 0 else hist
     buf = []
@@ -165,7 +256,6 @@ def _profile_block():
     return "\n".join(lines)
 
 def _parse_memory_output(text: str) -> tuple[str, list]:
-    """Ambil SUMMARY: ... dan FACTS: - ... robust terhadap noise."""
     if not text:
         return "", []
     t = text.replace("```", "\n")
@@ -200,7 +290,6 @@ def _parse_memory_output(text: str) -> tuple[str, list]:
     return summary.strip(), uniq[:MAX_FACTS]
 
 def _maybe_update_memory(chat: dict, model: str):
-    """Ringkas percakapan lama menjadi memory (summary + facts)."""
     if not _needs_memory_update(chat):
         return
     hist = chat.get("history", [])
@@ -228,11 +317,11 @@ def _maybe_update_memory(chat: dict, model: str):
     prompt = _SUMMARY_PROMPT_TMPL.format(
         old_summary=chat.get("memory_summary",""),
         old_facts="\n".join(f"- {x}" for x in (chat.get("memory_facts") or [])) or "- (tidak ada)",
-        old_dialog="\n".join(old_dialog)[:6000], 
+        old_dialog="\n".join(old_dialog)[:6000],
         new_tail="\n".join(new_tail)
     )
 
-    out = generate_text(prompt, model=model) 
+    out = generate_text(prompt, model=model)
     new_sum, new_facts = _parse_memory_output(out or "")
     if new_sum:
         chat["memory_summary"] = new_sum
@@ -245,20 +334,17 @@ def _maybe_update_memory(chat: dict, model: str):
                 merged.append(f)
         chat["memory_facts"] = merged[:MAX_FACTS]
 
-
-
 @app.get("/models")
 def get_models():
     try:
-        from .ollama_client import list_models
         return jsonify({
             "models": list_models(),
-            "default": DEFAULT_CONFIG.get("default_model", "gemma3:4b")
+            "default": _read_app_config().get("default_model", "gemma3:4b")
         })
     except Exception:
         return jsonify({
-            "models": [DEFAULT_CONFIG.get("default_model", "gemma3:4b")],
-            "default": DEFAULT_CONFIG.get("default_model", "gemma3:4b")
+            "models": [_read_app_config().get("default_model", "gemma3:4b")],
+            "default": _read_app_config().get("default_model", "gemma3:4b")
         })
 
 @app.get("/chats")
@@ -279,6 +365,48 @@ def get_chat(chat_id):
         return jsonify({"error": "Chat not found"}), 404
     return jsonify(chat)
 
+@app.post("/chat/<chat_id>")
+def chat_by_id(chat_id):
+    chats = storage.load_chats()
+    chat = next((c for c in chats if c["id"] == chat_id), None)
+    if not chat:
+        return jsonify({"error": "Chat not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    user_input = (data.get("message") or "").strip()
+    if not user_input:
+        return jsonify({"history": chat.get("history", []), "chat_id": chat_id, "model": chat.get("model")})
+
+    cfg = _read_app_config()
+    user_name = data.get("user_name", chat.get("user_name", "sayang"))
+    ai_name   = data.get("ai_name",   chat.get("ai_name",   "Changli"))
+    model     = (data.get("model") or chat.get("model") or cfg.get("default_model", "gemma3:4b")).strip()
+    lang      = cfg.get("lang", "en_us")
+
+    raw_cp = data.get("custom_prompt")
+    custom_prompt = (raw_cp.strip() if raw_cp else chat.get("custom_prompt", ""))
+
+    header        = _system_header(user_name, ai_name, lang)
+    profile_block = _profile_block()
+    mem_block     = _build_memory_block(chat)
+    history_text  = _recent_window_text(chat, user_input)
+    prompt = f"{header}{custom_prompt}\n{profile_block}{mem_block}{history_text}"
+
+    response = generate_text(prompt, model=model) or f"Sorry {user_name}, aku lagi bingung nih... 😢"
+
+    chat["user_name"]     = user_name
+    chat["ai_name"]       = ai_name
+    chat["model"]         = model
+    chat["custom_prompt"] = custom_prompt
+    chat.setdefault("history", []).append({"user": user_input, "changli": response})
+
+    _maybe_update_memory(chat, model=model)
+
+    storage.touch_chat(chat)
+    storage.save_chats(chats)
+
+    return jsonify({"response": response, "history": chat["history"], "chat_id": chat_id, "model": model}), 200
+
 def _prompt_header(user_name, ai_name):
     ai = ai_name or "AI"
     user = user_name or "sayang"
@@ -288,20 +416,20 @@ def _prompt_header(user_name, ai_name):
 def new_chat():
     data = request.get_json(silent=True) or {}
     user_input = (data.get("message") or "").strip()
+    cfg = _read_app_config()
+
     user_name  = data.get("user_name", "sayang")
     ai_name    = data.get("ai_name", "Changli")
-    model      = (data.get("model") or DEFAULT_CONFIG.get("default_model", "gemma3:4b")).strip()
+    model      = (data.get("model") or cfg.get("default_model", "gemma3:4b")).strip()
+    lang       = cfg.get("lang", "en_us")
 
     raw_cp = data.get("custom_prompt")
-    custom_prompt = (raw_cp.strip() if raw_cp else "") 
+    custom_prompt = (raw_cp.strip() if raw_cp else "")
 
     if not user_input:
         return jsonify({"error": f"Halo {user_name}, ketik sesuatu dulu ya 😘"}), 400
-    
-    header = _system_header(user_name, ai_name)
-    profile_block = _profile_block()
-    mem_block = ""
-    history_text = f"User: {user_input}\nAI:"
+
+    header = _system_header(user_name, ai_name, lang)
     prompt = f"{header}{custom_prompt}\nUser: {user_input}\nAI:"
 
     response = generate_text(prompt, model=model) or f"Sorry {user_name}, aku lagi bingung nih... 😢"
@@ -313,7 +441,7 @@ def new_chat():
         "model": model,
         "custom_prompt": custom_prompt,
         "history": [{"user": user_input, "changli": response}],
-        "memory_summery": "",
+        "memory_summary": "",
         "memory_facts": [],
         "last_updated": time.strftime("%Y-%m-%dT%H:%M:%S")
     }
@@ -321,45 +449,6 @@ def new_chat():
     return jsonify({"response": response, "history": chat["history"], "chat_id": chat["id"], "model": model})
 
 @app.post("/chat/<chat_id>/memory/clear")
-def continue_chat(chat_id):
-    data = request.get_json(silent=True) or {}
-    user_input = (data.get("message") or "").strip()
-
-    chats = storage.load_chats()
-    chat = next((c for c in chats if c["id"] == chat_id), None)
-    if not chat:
-        return jsonify({"error": "Chat not found"}), 404
-    if not user_input:
-        return jsonify({"history": chat["history"], "chat_id": chat_id, "model": chat.get("model")})
-
-    user_name = data.get("user_name", chat.get("user_name", "sayang"))
-    ai_name   = data.get("ai_name",   chat.get("ai_name",   "Changli"))
-    model     = (data.get("model") or chat.get("model") or DEFAULT_CONFIG.get("default_model","gemma3:4b")).strip()
-    raw_cp = data.get("custom_prompt")
-    custom_prompt = (raw_cp.strip() if raw_cp else chat.get("custom_prompt",""))
-
-    history_text = ""
-    for msg in chat.get("history", []):
-        history_text += f"User: {msg['user']}\nAI: {msg['changli']}\n"
-    history_text += f"User: {user_input}\nAI:"
-
-    header = _system_header(user_name, ai_name)
-    profile_block = _profile_block
-    mem_block = _build_memory_block(chat)
-    history_text = _recent_window_text(chat, user_input)
-    prompt = f"{header}{custom_prompt}\n{mem_block}{history_text}"
-
-    response = generate_text(prompt, model=model) or f"Sorry {user_name}, aku lagi bingung nih... 😢"
-
-    chat["user_name"] = user_name
-    chat["ai_name"]   = ai_name
-    chat["model"]     = model
-    chat["custom_prompt"] = custom_prompt
-    chat.setdefault("history", []).append({"user": user_input, "changli": response})
-    storage.touch_chat(chat)
-    storage.save_chats(chats)
-    return jsonify({"response": response, "history": chat["history"], "chat_id": chat_id, "model": model})
-
 def clear_chat_memory(chat_id):
     chats = storage.load_chats()
     chat = next((c for c in chats if c["id"] == chat_id), None)
@@ -368,5 +457,4 @@ def clear_chat_memory(chat_id):
     chat["memory_summary"] = ""
     chat["memory_facts"] = []
     storage.save_chats(chats)
-    return jsonify({"ok": True})
-
+    return jsonify({"ok": True, "chat_id": chat_id})

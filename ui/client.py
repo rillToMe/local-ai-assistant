@@ -78,3 +78,13 @@ class Client:
         r = self.sess.post(self.base + f"/chat/{chat_id}/memory/clear", timeout=timeout)
         r.raise_for_status()
         return r.json()
+
+    def get_i18n(self, lang: str, timeout=5):
+        r = self.sess.get(self.base + f"/i18n/{(lang or 'en_us').lower()}", timeout=timeout)
+        r.raise_for_status()
+        return r.json()
+
+    def set_settings(self, patch: dict, timeout=5):
+        r = self.sess.post(self.base + "/settings", json=(patch or {}), timeout=timeout)
+        r.raise_for_status()
+        return r.json()

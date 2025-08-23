@@ -1,0 +1,23 @@
+{
+  "lang": "id",
+  "keys": {
+    "app.title": "{ai} — Local Chat UI",
+    "status.online": "Online",
+    "status.offline": "Offline",
+    "btn.settings": "Pengaturan",
+    "btn.history": "Riwayat",
+    "btn.clear": "Bersihkan",
+    "btn.profile": "Profil",
+    "btn.clearmem": "Hapus Memori",
+    "btn.send": "Kirim",
+    "label.language": "Bahasa",
+    "label.typing": "{ai} lagi ngetik…",
+    "placeholder.input": "Tulis pesan…",
+    "err.load.models": "Gagal memuat daftar model: {err}",
+    "err.nochat.clear": "Belum ada chat aktif. Kirim pesan dulu buat hapus memori.",
+    "msg.model.set": "Model diganti ke: {model}",
+    "msg.loaded.history": "Riwayat chat dimuat.",
+    "msg.newchat": "Mulai chat baru.",
+    "msg.mem.cleared": "Memori pada chat ini dihapus."
+  }
+}

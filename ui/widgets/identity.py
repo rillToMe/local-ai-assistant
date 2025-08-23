@@ -5,11 +5,6 @@ from PySide6.QtWidgets import (
 )
 
 class IdentityDialog(QDialog):
-    """
-    Dialog untuk ganti AI Name, User Name, dan Custom Prompt.
-    - Tombol "Default Prompt" ambil dari backend /config
-    - Setelah Save (OK), dialog close
-    """
     def __init__(self, parent, initial, fetch_default_prompt):
         super().__init__(parent)
         self.setWindowTitle("Identity & Prompt")

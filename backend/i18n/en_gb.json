@@ -1,0 +1,23 @@
+{
+  "lang": "en_gb",
+  "keys": {
+    "app.title": "{ai} — Local Chat UI",
+    "status.online": "Online",
+    "status.offline": "Offline",
+    "btn.settings": "Settings",
+    "btn.history": "History",
+    "btn.clear": "Clear",
+    "btn.profile": "Profile",
+    "btn.clearmem": "Clear Memory",
+    "btn.send": "Send",
+    "label.language": "Language",
+    "label.typing": "{ai} is typing",
+    "placeholder.input": "Type a message…",
+    "err.load.models": "Failed to load model list: {err}",
+    "err.nochat.clear": "No active chat yet. Send a message first to clear memory.",
+    "msg.model.set": "Model set to: {model}",
+    "msg.loaded.history": "Loaded chat history.",
+    "msg.newchat": "New chat started.",
+    "msg.mem.cleared": "Memory cleared for this chat."
+  }
+}

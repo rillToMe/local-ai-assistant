@@ -1,0 +1,20 @@
+{
+  "app.title": "{ai} — ローカルチャットUI",
+  "status.online": "オンライン",
+  "status.offline": "オフライン",
+  "btn.settings": "設定",
+  "btn.history": "履歴",
+  "btn.clear": "クリア",
+  "btn.profile": "プロフィール",
+  "btn.clearmem": "メモリを消去",
+  "label.typing": "{ai}が入力中",
+  "placeholder.input": "メッセージを入力…",
+  "label.model": "モデル",
+  "msg.newchat": "新しいチャットを開始しました。",
+  "msg.loaded.history": "チャット履歴を読み込みました。",
+  "msg.model.set": "モデルを設定: {model}",
+  "err.load.models": "モデル一覧の読み込みに失敗しました: {err}",
+  "err.nochat.clear": "アクティブなチャットがまだありません。先にメッセージを送信してください。",
+  "msg.mem.cleared": "このチャットのメモリを削除しました。",
+  "label.language": "言語"
+}

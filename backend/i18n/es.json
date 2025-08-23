@@ -1,0 +1,23 @@
+{
+  "lang": "es",
+  "keys": {
+    "app.title": "{ai} — Chat Local",
+    "status.online": "En línea",
+    "status.offline": "Sin conexión",
+    "btn.settings": "Ajustes",
+    "btn.history": "Historial",
+    "btn.clear": "Limpiar",
+    "btn.profile": "Perfil",
+    "btn.clearmem": "Borrar memoria",
+    "btn.send": "Enviar",
+    "label.language": "Idioma",
+    "label.typing": "{ai} está escribiendo",
+    "placeholder.input": "Escribe un mensaje…",
+    "err.load.models": "No se pudo cargar la lista de modelos: {err}",
+    "err.nochat.clear": "No hay un chat activo. Envía un mensaje antes de borrar la memoria.",
+    "msg.model.set": "Modelo establecido: {model}",
+    "msg.loaded.history": "Historial cargado.",
+    "msg.newchat": "Nuevo chat iniciado.",
+    "msg.mem.cleared": "Memoria borrada para este chat."
+  }
+}

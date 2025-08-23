@@ -1,0 +1,20 @@
+{
+  "app.title": "{ai} — واجهة الدردشة المحلية",
+  "status.online": "متصل",
+  "status.offline": "غير متصل",
+  "btn.settings": "الإعدادات",
+  "btn.history": "السجل",
+  "btn.clear": "مسح",
+  "btn.profile": "الملف الشخصي",
+  "btn.clearmem": "مسح الذاكرة",
+  "label.typing": "{ai} يكتب",
+  "placeholder.input": "اكتب رسالة…",
+  "label.model": "النموذج",
+  "msg.newchat": "تم بدء محادثة جديدة.",
+  "msg.loaded.history": "تم تحميل سجل الدردشة.",
+  "msg.model.set": "تم تعيين النموذج إلى: {model}",
+  "err.load.models": "فشل تحميل قائمة النماذج: {err}",
+  "err.nochat.clear": "لا توجد محادثة نشطة بعد. أرسل رسالة أولًا.",
+  "msg.mem.cleared": "تم مسح ذاكرة هذه المحادثة.",
+  "label.language": "اللغة"
+}
