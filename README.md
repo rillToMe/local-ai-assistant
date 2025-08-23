@@ -86,7 +86,7 @@ local-ai-assistant/
 - 🎭 **Custom Persona** → change AI name, user name, and prompt
 - 👤 **Profile System** → add personal info (e.g. *What do you do*, *Anything else the AI should know*)
 - 🧠 **Chat Memory** → AI remembers up to **32 previous messages**
-- 🌍 **Multi-language Support** → 9 languages, native names in UI, with layered fallback (`en_us → id → target`)
+- 🌍 **Multi-language Support** → 9 languages, native names in UI, with layered fallback (`en_us → id → target`) English (US, UK), Bahasa Indonesia, 日本語, 한국어, 中文（简体）, Português, Español, العربية.
 - 🎨 **Custom Background** → solid color or custom image
 - ⚙️ **Flask Backend** with `/chat`, `/chats`, `/config` endpoints
 - 🤖 **Ollama Integration** → run local AI models; default `gemma3:4b`, now supports **model selection**
