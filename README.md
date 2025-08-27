@@ -11,7 +11,7 @@
 
 ## 📖 Description
 Local AI Assistant is an **offline/local AI chat application** featuring:
-- **Backend** built with Flask → API communication and chat storage.
+- **Backend** built with Flask → API communication and chat storage, 
 - **Frontend (UI)** built with PySide6 (Qt) → interactive chat interface.
 - **Ollama Integration** → run local AI models (default: `gemma3:4b`, now supports model selection).
 - **Multi-language system** with 9 languages and layered fallback.
