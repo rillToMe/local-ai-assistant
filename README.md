@@ -5,7 +5,8 @@
 
 ---
 
-🚧 **Status:** This project will not proceed to the **development** stage, because with every update, **new bugs** will appear. I will make it **stand alone** without the help of other software **in the future**. 🚧
+🚧 **Status:** This project will **no longer be developed**, because every time Ollama releases an update, new bugs appear.  
+In the future, I will rebuild it as a **standalone application**, without relying on any other software. 🚧
 
 ---
 
