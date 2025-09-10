@@ -5,7 +5,7 @@
 
 ---
 
-🚧 **Status:** This project is still in **development**, so expect bugs, incomplete features, & potential breaking changes. 🚧
+🚧 **Status:** This project will not proceed to the **development** stage, because with every update, **new bugs** will appear. I will make it **stand alone** without the help of other software **in the future**. 🚧
 
 ---
 
